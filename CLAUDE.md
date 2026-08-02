@@ -30,6 +30,10 @@ Please see Makefile for other useful commands and shortcuts.
 
 Note that `make` commands return non-zero exit codes on failure. A successful run (exit code 0) means everything passed — do not re-run to scan for errors in the output.
 
+If you pipe a `make` command into `tail`, prefix it with `set -o pipefail` (`set -o pipefail; make validate | tail -40`). Without it the shell reports the *pipe's* exit status rather than make's, discarding the pass/fail signal above and inviting a wasteful re-run. Only `tail` is safe this way — under `pipefail`, `head` reports 141 (it closes the pipe early, killing make with SIGPIPE) and `grep` reports 1 whenever it simply finds no match, so both manufacture a failure out of a successful run. `make validate` and `make test` are slow and expensive — budget one run. To keep the failure details as well as the exit code, redirect to a log file outside the repo and read that file, since a `tail` window usually cuts off the errors themselves.
+
+If you nonetheless end up holding truncated output and no exit code, read it instead of re-running: make aborts at the first failing target and prints `make: *** [<target>] Error N` as its very last line. Output that ends in a target's own normal output is therefore already proof that every target passed.
+
 ### Checklist for making changes
 
 Before declaring a change "done", ask yourself the following questions:
